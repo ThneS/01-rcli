@@ -1,9 +1,8 @@
-use crate::{
-    get_content, get_reader, process_text_key_generate, process_text_sign, process_text_verify,
-    CmdExector,
-};
-
 use super::{verify_file, verify_path};
+use crate::{
+    get_content, get_reader, process_text_chacha20_decrypt, process_text_chacha20_encrypt,
+    process_text_key_generate, process_text_sign, process_text_verify, CmdExector,
+};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use clap::Parser;
 use enum_dispatch::enum_dispatch;
@@ -19,6 +18,10 @@ pub enum TextSubCommand {
     Verify(TextVerifyOpts),
     #[command(about = "Generate a random blake3 key or ed25519 key pair")]
     Generate(KeyGenerateOpts),
+    #[command(about = "Encrypt or decrypt a text with a key")]
+    Encrypt(TextEncryptOpts),
+    #[command(about = "Decrypt a text with a key")]
+    Decrypt(TextDecryptOpts),
 }
 
 #[derive(Debug, Parser)]
@@ -121,6 +124,37 @@ impl CmdExector for KeyGenerateOpts {
         for (k, v) in key {
             fs::write(self.output_path.join(k), v).await?;
         }
+        Ok(())
+    }
+}
+#[derive(Debug, Parser)]
+pub struct TextEncryptOpts {
+    #[arg(long, value_parser = verify_file, default_value = "-")]
+    pub input: String,
+    #[arg(long)]
+    pub key: String,
+}
+#[derive(Debug, Parser)]
+pub struct TextDecryptOpts {
+    #[arg(long, value_parser = verify_file, default_value = "-")]
+    pub input: String,
+    #[arg(long)]
+    pub key: String,
+}
+
+impl CmdExector for TextEncryptOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let mut reader = get_reader(&self.input)?;
+        let res = process_text_chacha20_encrypt(&mut reader, &self.key).unwrap();
+        println!("{}", res);
+        Ok(())
+    }
+}
+impl CmdExector for TextDecryptOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let mut reader = get_reader(&self.input)?;
+        let res = process_text_chacha20_decrypt(&mut reader, &self.key).unwrap();
+        println!("{}", res);
         Ok(())
     }
 }

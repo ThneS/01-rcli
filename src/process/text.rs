@@ -1,5 +1,5 @@
 use crate::{process_genpass, TextSignFormat};
-use anyhow::Result;
+use anyhow::{Ok, Result};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use rand::rngs::OsRng;
 use std::{collections::HashMap, io::Read};
@@ -149,10 +149,19 @@ pub fn process_text_key_generate(format: TextSignFormat) -> Result<HashMap<&'sta
     }
 }
 
+pub fn process_text_chacha20_encrypt(_reader: &mut dyn Read, _key: &str) -> Result<String> {
+    //todo
+    Ok(String::new())
+}
+
+pub fn process_text_chacha20_decrypt(_reader: &mut dyn Read, _key: &str) -> Result<String> {
+    //todo
+    Ok(String::new())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 
     const KEY: &[u8] = include_bytes!("../../fixtures/blake3.txt");
 
