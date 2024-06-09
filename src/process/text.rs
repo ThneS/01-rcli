@@ -1,7 +1,11 @@
 use crate::{process_genpass, TextSignFormat};
-use anyhow::{Ok, Result};
+use anyhow::Result;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+use chacha20poly1305::{
+    aead::{Aead, AeadCore, KeyInit, OsRng},
+    ChaCha20Poly1305, Key, Nonce,
+};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
-use rand::rngs::OsRng;
 use std::{collections::HashMap, io::Read};
 
 pub trait TextSigner {
@@ -149,14 +153,40 @@ pub fn process_text_key_generate(format: TextSignFormat) -> Result<HashMap<&'sta
     }
 }
 
-pub fn process_text_chacha20_encrypt(_reader: &mut dyn Read, _key: &str) -> Result<String> {
-    //todo
-    Ok(String::new())
+pub fn process_text_chacha20_encrypt(reader: &mut dyn Read, key: &[u8]) -> Result<String> {
+    let key = Key::from_slice(&key);
+    let cipher = ChaCha20Poly1305::new(key);
+    let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng);
+    let mut buf = Vec::new();
+    reader.read_to_end(&mut buf)?;
+    let ciphertext = cipher
+        .encrypt(&nonce, &*buf)
+        .map_err(|e| anyhow::anyhow!("Encryption error: {:?}", e))?;
+
+    // 创建一个新的 Vec 来存储 nonce 和 ciphertext
+    let mut result = Vec::new();
+    result.extend_from_slice(&nonce);
+    result.extend_from_slice(&ciphertext);
+    let encoded = URL_SAFE_NO_PAD.encode(result);
+    Ok(encoded)
 }
 
-pub fn process_text_chacha20_decrypt(_reader: &mut dyn Read, _key: &str) -> Result<String> {
-    //todo
-    Ok(String::new())
+pub fn process_text_chacha20_decrypt(reader: &mut dyn Read, key: &[u8]) -> Result<String> {
+    let key = Key::from_slice(&key);
+    let cipher = ChaCha20Poly1305::new(key);
+    // 读取reader的内容
+    let mut buf = Vec::new();
+    reader.read_to_end(&mut buf)?;
+    let buf = URL_SAFE_NO_PAD.decode(buf)?;
+    // 从buf中获取nonce和ciphertext
+    let nonce = &buf[..12];
+    let nonce = Nonce::from_slice(nonce);
+    let ciphertext = &buf[12..];
+    let plaintext = cipher
+        .decrypt(&nonce, &*ciphertext)
+        .map_err(|e| anyhow::anyhow!("Decryption error: {:?}", e))?;
+    let res = String::from_utf8_lossy(&plaintext).to_string();
+    Ok(res)
 }
 
 #[cfg(test)]

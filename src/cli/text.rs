@@ -131,21 +131,22 @@ impl CmdExector for KeyGenerateOpts {
 pub struct TextEncryptOpts {
     #[arg(long, value_parser = verify_file, default_value = "-")]
     pub input: String,
-    #[arg(long)]
+    #[arg(long, value_parser = verify_file,  default_value = "-")]
     pub key: String,
 }
 #[derive(Debug, Parser)]
 pub struct TextDecryptOpts {
     #[arg(long, value_parser = verify_file, default_value = "-")]
     pub input: String,
-    #[arg(long)]
+    #[arg(long, value_parser = verify_file, default_value = "fixtures/b64.txt")]
     pub key: String,
 }
 
 impl CmdExector for TextEncryptOpts {
     async fn execute(self) -> anyhow::Result<()> {
         let mut reader = get_reader(&self.input)?;
-        let res = process_text_chacha20_encrypt(&mut reader, &self.key).unwrap();
+        let key = get_content(&self.key)?;
+        let res = process_text_chacha20_encrypt(&mut reader, &key).unwrap();
         println!("{}", res);
         Ok(())
     }
@@ -153,7 +154,8 @@ impl CmdExector for TextEncryptOpts {
 impl CmdExector for TextDecryptOpts {
     async fn execute(self) -> anyhow::Result<()> {
         let mut reader = get_reader(&self.input)?;
-        let res = process_text_chacha20_decrypt(&mut reader, &self.key).unwrap();
+        let key = get_content(&self.key)?;
+        let res = process_text_chacha20_decrypt(&mut reader, &key).unwrap();
         println!("{}", res);
         Ok(())
     }
