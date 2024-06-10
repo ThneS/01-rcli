@@ -154,7 +154,7 @@ pub fn process_text_key_generate(format: TextSignFormat) -> Result<HashMap<&'sta
 }
 
 pub fn process_text_chacha20_encrypt(reader: &mut dyn Read, key: &[u8]) -> Result<String> {
-    let key = Key::from_slice(&key);
+    let key = Key::from_slice(key);
     let cipher = ChaCha20Poly1305::new(key);
     let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng);
     let mut buf = Vec::new();
@@ -172,7 +172,7 @@ pub fn process_text_chacha20_encrypt(reader: &mut dyn Read, key: &[u8]) -> Resul
 }
 
 pub fn process_text_chacha20_decrypt(reader: &mut dyn Read, key: &[u8]) -> Result<String> {
-    let key = Key::from_slice(&key);
+    let key = Key::from_slice(key);
     let cipher = ChaCha20Poly1305::new(key);
     // 读取reader的内容
     let mut buf = Vec::new();
@@ -183,7 +183,7 @@ pub fn process_text_chacha20_decrypt(reader: &mut dyn Read, key: &[u8]) -> Resul
     let nonce = Nonce::from_slice(nonce);
     let ciphertext = &buf[12..];
     let plaintext = cipher
-        .decrypt(&nonce, &*ciphertext)
+        .decrypt(nonce, ciphertext)
         .map_err(|e| anyhow::anyhow!("Decryption error: {:?}", e))?;
     let res = String::from_utf8_lossy(&plaintext).to_string();
     Ok(res)

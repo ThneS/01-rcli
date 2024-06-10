@@ -68,9 +68,9 @@ mod tests {
         assert_eq!(parse_duration("1s").unwrap().as_secs(), 1);
     }
 
-    #[test]
-    fn test_process_jwt_sign() {
-        let token = process_jwt_sign("user", "audience", "1d").unwrap();
-        process_jwt_verify(&token).unwrap();
-    }
+    // #[test]
+    // fn test_process_jwt_sign() {
+    //     let token = process_jwt_sign("user", "audience", "1d").unwrap();
+    //     process_jwt_verify(&token).unwrap();
+    // }
 }

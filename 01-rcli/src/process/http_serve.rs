@@ -83,7 +83,6 @@ async fn dir_handler(Path(path): Path<String>) -> (StatusCode, HeaderMap, String
                 let name = entry.file_name();
                 let name = name.to_string_lossy();
                 let path = entry.path();
-                let path = path;
                 let path = path.to_string_lossy();
                 content.push_str(&format!(r#"<li><a href="/{}">{}</a></li>"#, path, name));
             }
