@@ -1,3 +1,3 @@
 [workspace]
-members = ["01-rcli"]
+members = ["01-rcli", "02-simple-redis"]
 resolver = "2"
